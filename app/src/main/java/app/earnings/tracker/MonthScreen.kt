@@ -140,6 +140,8 @@ fun MonthScreen(store: Store, ym: YearMonth, onBack: () -> Unit) {
                 Tile("Лучший день", if (bestDate == null) "—" else money(best), bestDate?.let { dayMonth(it) } ?: "пока нет", Modifier.weight(1f))
             }
         }
+        Spacer(Modifier.height(12.dp))
+        Appear(5 + weeks.size) { SplitCard(entries, sp.start, sp.end) }
     }
 }
 
@@ -209,7 +211,13 @@ private fun EntryRow(e: Entry, onDelete: () -> Unit) {
         ) {
             Column(Modifier.weight(1f)) {
                 Text(dayMonth(e.date) + " · " + weekdayShort(e.date), color = C.text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                if (e.note.isNotEmpty()) Text(e.note, color = C.muted, fontSize = 12.sp, maxLines = 1)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Box(Modifier.size(7.dp).clip(androidx.compose.foundation.shape.CircleShape).background(catOf(e.cat).color))
+                    Text(
+                        catOf(e.cat).name + if (e.note.isNotEmpty()) " · " + e.note else "",
+                        color = C.muted, fontSize = 12.sp, maxLines = 1
+                    )
+                }
             }
             Text("+" + money(e.amount), color = C.text, fontFamily = Mono, fontSize = 14.sp, textAlign = TextAlign.End, maxLines = 1, softWrap = false)
             Box(

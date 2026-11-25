@@ -54,6 +54,16 @@ object C {
 
 val Mono = FontFamily.Monospace
 
+data class Cat(val id: String, val name: String, val color: Color)
+
+val CATS = listOf(
+    Cat("work", "Заработок", Color(0xFF3DDC97)),
+    Cat("tips", "Чаевые", Color(0xFF5BB0FF)),
+    Cat("other", "Прочее", Color(0xFFF2C14E)),
+)
+
+fun catOf(id: String): Cat = CATS.firstOrNull { it.id == id } ?: CATS[0]
+
 /** Плавное появление снизу с задержкой: так элементы выезжают друг за другом. */
 @Composable
 fun Appear(index: Int, key: Any? = null, modifier: Modifier = Modifier, content: @Composable () -> Unit) {

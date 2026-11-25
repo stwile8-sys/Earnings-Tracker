@@ -171,6 +171,8 @@ fun OverviewScreen(store: Store, onOpenMonth: (YearMonth) -> Unit, onAdd: () -> 
                     Tile("Лучший день", if (bestDate == null) "—" else money(best), bestDate?.let { dayMonth(it) } ?: "пока нет", Modifier.weight(1f))
                 }
             }
+            Spacer(Modifier.height(16.dp))
+            Appear(3, period) { SplitCard(entries, el.start, el.end) }
             Spacer(Modifier.height(24.dp))
 
             if (entries.isEmpty()) {

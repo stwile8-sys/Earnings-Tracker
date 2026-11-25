@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -132,6 +133,7 @@ fun AddScreen(store: Store, onBack: () -> Unit) {
     var dayEpoch by rememberSaveable { mutableStateOf(today().toEpochDay()) }
     var sumText by rememberSaveable { mutableStateOf("") }
     var note by rememberSaveable { mutableStateOf("") }
+    var cat by rememberSaveable { mutableStateOf("work") }
     var showPicker by remember { mutableStateOf(false) }
     var saved by remember { mutableStateOf(false) }
 
@@ -146,7 +148,7 @@ fun AddScreen(store: Store, onBack: () -> Unit) {
 
     LaunchedEffect(saved) {
         if (saved) {
-            store.add(date, amount, note)
+            store.add(date, amount, note, cat)
             delay(500)
             onBack()
         }
@@ -251,6 +253,17 @@ fun AddScreen(store: Store, onBack: () -> Unit) {
 
             Appear(3) {
                 Column {
+                    Label("Категория")
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        CATS.forEach { c -> CatChip(c, cat == c.id) { cat = c.id } }
+                    }
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+
+            Appear(4) {
+                Column {
                     Label("Заметка · необязательно")
                     Spacer(Modifier.height(8.dp))
                     Box(
@@ -275,7 +288,7 @@ fun AddScreen(store: Store, onBack: () -> Unit) {
             }
             Spacer(Modifier.height(24.dp))
 
-            Appear(4) {
+            Appear(5) {
                 Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(C.surface).padding(16.dp)) {
                     SumLine("Было за " + monthName(ym.monthValue).lowercase(), money(before), C.text)
                     SumLine("Эта запись", "+" + money(amount), C.green)
@@ -306,6 +319,21 @@ fun AddScreen(store: Store, onBack: () -> Unit) {
 
     if (showPicker) {
         PickerDialog(date, onPick = { dayEpoch = it.toEpochDay() }, onDismiss = { showPicker = false })
+    }
+}
+
+@Composable
+private fun CatChip(c: Cat, selected: Boolean, onClick: () -> Unit) {
+    val bg by animateColorAsState(if (selected) C.text else C.surface, label = "catBg")
+    val fg by animateColorAsState(if (selected) C.bg else C.text, label = "catFg")
+    Row(
+        Modifier.pressable(onClick = onClick).height(44.dp).clip(RoundedCornerShape(12.dp)).background(bg)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(Modifier.size(8.dp).clip(CircleShape).background(c.color))
+        Text(c.name, color = fg, fontSize = 15.sp, fontWeight = FontWeight.Medium)
     }
 }
 

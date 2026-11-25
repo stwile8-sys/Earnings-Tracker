@@ -99,6 +99,11 @@ h2{font-size:18px;font-weight:600;margin:24px 0 4px}
 .body{display:flex;flex-direction:column;min-height:calc(100vh - 190px - env(safe-area-inset-top) - env(safe-area-inset-bottom));min-height:calc(100dvh - 190px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
 .bk{display:flex;flex-direction:column;align-items:flex-start;margin-top:auto;padding-top:24px;font-size:13px}.bk button{color:var(--mu);text-decoration:underline;padding:8px 0}
 .sec{margin-top:24px}
+.sbar{display:flex;gap:2px;height:10px;border-radius:5px;background:var(--ln);overflow:hidden}.sbar i{display:block;height:100%;width:0;flex:none;transition:width .9s var(--ease)}
+.lg{display:flex;align-items:center;gap:10px;height:34px;font-size:14px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.ch.cc{display:inline-flex;align-items:center;gap:8px}
+.er .nm small{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -113,6 +118,12 @@ const MG = ['января','февраля','марта','апреля','мая'
 const WF = ['понедельник','вторник','среда','четверг','пятница','суббота','воскресенье'];
 const WS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 const PN = { w: 'Неделя', m: 'Месяц', y: 'Год' };
+const CATS = [
+  { id: 'work', name: 'Заработок', color: '#3DDC97' },
+  { id: 'tips', name: 'Чаевые', color: '#5BB0FF' },
+  { id: 'other', name: 'Прочее', color: '#F2C14E' },
+];
+const catOf = x => CATS.find(c => c.id === x.cat) || CATS[0];
 
 const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, NB);
 const money = n => fmt(n) + NB + '₽';
@@ -302,6 +313,17 @@ const chip = d => d == null ? '' : `<span class="chip ${d >= 0 ? 'up' : 'dn'}"><
 const dtxt = d => d == null ? '<span class="dt nn">—</span>' : `<span class="dt ${d >= 0 ? 'up' : 'dn'}"><i class="tri"></i>${pct(d)}</span>`;
 const tile = (t, v, n) => `<div class="tile"><span class="mu" style="font-size:12px">${t}</span><b>${v}</b><small>${n}</small></div>`;
 
+// ---- разбивка по категориям ----
+function splitHtml(a, b, i) {
+  const sums = CATS.map(c => E.reduce((s, x) => (catOf(x).id === c.id && x.day >= a && x.day <= b ? s + x.amount : s), 0));
+  const tot = sums.reduce((p, q) => p + q, 0);
+  if (tot <= 0) return '';
+  const bar = CATS.map((c, k) => (sums[k] ? `<i data-w="${sums[k] * 100 / tot}" style="background:${c.color}"></i>` : '')).join('');
+  const leg = CATS.map((c, k) => (sums[k] ? `<div class="lg"><i class="dot" style="background:${c.color}"></i><span style="flex:1">${c.name}</span><b class="mono" style="font-size:14px;font-weight:500">${money(sums[k])}</b><span class="mono mu" style="width:46px;text-align:right;font-size:13px">${Math.round(sums[k] * 100 / tot)}%</span></div>` : '')).join('');
+  return `<div class="sumc ap" style="--i:${i}"><div class="lbl">По категориям</div><div class="sbar" style="margin-top:12px">${bar}</div><div style="margin-top:8px">${leg}</div></div>`;
+}
+function animSplit(root) { $$('.sbar i', root).forEach((el, k) => setTimeout(() => (el.style.width = el.dataset.w + '%'), 450 + k * 120)); }
+
 // ---- обзор ----
 let period = 'm', lastTotal = 0;
 
@@ -336,6 +358,7 @@ function renderBody(v) {
 <div class="ap" style="--i:2"><canvas class="chart"></canvas></div>
 <div class="tiles ap" style="--i:3">${period === 'w' ? tile('Среднее в день', money(avg), 'за ' + days.length + ' дн.') : tile('Эта неделя', money(wkTotal), rangeLbl(wk.s, wk.e))}${tile('Лучший день', bestDay == null ? '—' : money(best), bestDay == null ? 'пока нет' : dm(bestDay))}</div>`;
 
+  html += splitHtml(el.s, el.e, 3.5);
   const sparks = [];
   if (!E.length) {
     html += `<div class="empty ap" style="--i:4"><b>Пока нет записей</b><p>Нажмите «Добавить», выберите дату и впишите, сколько заработали. График и месяцы появятся сами.</p></div>`;
@@ -357,6 +380,7 @@ function renderBody(v) {
   }
   html += `<div class="bk"><button class="ex">Сохранить копию</button><button class="im">Загрузить копию</button><input class="fi" type="file" accept=".json,application/json" hidden></div>`;
   body.innerHTML = html;
+  animSplit(body);
 
   const tot = $('.tot', body); tot._v = lastTotal; countUp(tot, total); lastTotal = total;
   chart($('canvas.chart', body), { cum, total: totalDays, labels, bars: period === 'y' ? null : days });
@@ -403,12 +427,14 @@ function renderMonth(v, y, m, anim) {
     const wd = i > 0 && !w.cur && prev > 0 ? (w.sum - prev) * 100 / prev : null;
     const isBest = !w.cur && w.sum > 0 && w.sum === bestSum, open = openWeek === w.s;
     const es = E.filter(x => x.day >= w.s && x.day <= w.e).sort((p, q) => q.day - p.day || q.id - p.id);
-    const list = es.length ? es.map(x => `<div class="er" data-id="${x.id}"><div class="nm"><b>${dm(x.day)} · ${WS[info(x.day).w]}</b>${x.note ? `<small>${esc(x.note)}</small>` : ''}</div><div class="am">+${money(x.amount)}</div><button class="x pr" aria-label="Удалить запись">${IC.x}</button></div>`).join('')
+    const list = es.length ? es.map(x => `<div class="er" data-id="${x.id}"><div class="nm"><b>${dm(x.day)} · ${WS[info(x.day).w]}</b><small><i class="dot" style="background:${catOf(x).color}"></i>${catOf(x).name}${x.note ? ' · ' + esc(x.note) : ''}</small></div><div class="am">+${money(x.amount)}</div><button class="x pr" aria-label="Удалить запись">${IC.x}</button></div>`).join('')
       : '<div class="mu" style="padding:8px 0;font-size:14px">На этой неделе записей нет</div>';
     html += `<div class="wk ap" style="--i:${4 + k}" data-s="${w.s}"><div class="hr pr"><div class="nm"><b>${rangeLbl(w.s, w.e)}</b><small style="color:${isBest ? 'var(--g)' : 'var(--mu)'}">${w.cur ? 'идёт · ' + n + ' дн.' : isBest ? 'лучшая неделя' : n + ' дн.'}</small></div><div class="sm">${money(w.sum)}</div><div class="dd">${dtxt(wd)}</div>${IC.chev(open)}</div><div class="gb"><i data-f="${maxSum ? w.sum / maxSum : 0}" style="background:${isBest ? 'var(--g)' : 'var(--bar)'}"></i></div><div class="xp${open ? ' open' : ''}"><div><div style="height:10px"></div>${list}<div style="height:6px"></div></div></div></div>`;
   }
   html += `<div class="tiles ap" style="--i:${6 + k};margin-top:20px">${tile('Среднее в день', money(avg), 'за ' + days.length + ' дн.')}${tile('Лучший день', bestDay == null ? '—' : money(best), bestDay == null ? 'пока нет' : dm(bestDay))}</div>`;
+  html += splitHtml(sp.s, sp.e, 7 + k);
   v.innerHTML = html;
+  animSplit(v);
   v.scrollTop = keep;
 
   $('.bk1', v).onclick = () => history.back();
@@ -436,19 +462,21 @@ function viewAdd() {
   const v = mk('<div class="view"></div>');
   v._mount = () => {
     const t = today();
-    let day = t, amt = 0;
+    let day = t, amt = 0, cat = 'work';
     v.innerHTML = `<div class="top ap" style="--i:0"><button class="sq pr bk1">${IC.back}</button><div><h1>Новая запись</h1><small class="mo"></small></div></div>
 <div class="sec ap" style="--i:1"><div class="lbl">Дата</div><div class="chips"><button class="ch" data-o="0">Сегодня</button><button class="ch" data-o="1">Вчера</button><button class="ch" data-o="2">Позавчера</button><div class="dp sq cal">${IC.cal}<input type="date" max="${iso(t)}" aria-label="Выбрать другую дату"></div></div><div class="mu dtl" style="margin-top:8px;font-size:14px"></div></div>
 <div class="sec ap" style="--i:2"><div class="lbl">Сумма</div><div class="amt"><input class="ai" inputmode="numeric" autocomplete="off" placeholder="0" aria-label="Сумма"><span>₽</span></div><div class="qs">${[500, 1000, 5000, 10000].map(a => `<button class="pr" data-a="${a}">+${fmt(a)}</button>`).join('')}</div></div>
-<div class="sec ap" style="--i:3"><div class="lbl">Заметка · необязательно</div><input class="note" maxlength="80" placeholder="Например, имя клиента или место"></div>
-<div class="sumc ap" style="--i:4"><div class="sl"><span class="bf"></span><b class="bv"></b></div><div class="sl"><span>Эта запись</span><b class="g ev"></b></div><hr><div class="sl" style="height:auto"><span>Станет</span><div style="text-align:right"><b class="af" style="font:600 20px var(--mono);display:block;color:var(--tx)"></b><span class="dd2"></span></div></div></div>
+<div class="sec ap" style="--i:3"><div class="lbl">Категория</div><div class="chips">${CATS.map(c => `<button class="ch cc" data-c="${c.id}"><i class="dot" style="background:${c.color}"></i>${c.name}</button>`).join('')}</div></div>
+<div class="sec ap" style="--i:4"><div class="lbl">Заметка · необязательно</div><input class="note" maxlength="80" placeholder="Например, имя клиента или место"></div>
+<div class="sumc ap" style="--i:5"><div class="sl"><span class="bf"></span><b class="bv"></b></div><div class="sl"><span>Эта запись</span><b class="g ev"></b></div><hr><div class="sl" style="height:auto"><span>Станет</span><div style="text-align:right"><b class="af" style="font:600 20px var(--mono);display:block;color:var(--tx)"></b><span class="dd2"></span></div></div></div>
 <button class="save" disabled>Сохранить запись</button>`;
     const inp = $('.ai', v), dpi = $('.dp input', v), btn = $('.save', v);
     const upd = () => {
       const ii = info(day), f = dayOf(ii.y, ii.m, 1), l = dayOf(ii.y, ii.m + 1, 0), before = sum(f, l);
       $('.mo', v).textContent = MN[ii.m] + ' ' + ii.y;
       $('.dtl', v).textContent = WF[ii.w][0].toUpperCase() + WF[ii.w].slice(1) + ', ' + full(day);
-      $$('.ch', v).forEach(b => b.classList.toggle('on', day === t - +b.dataset.o));
+      $$('.ch[data-o]', v).forEach(b => b.classList.toggle('on', day === t - +b.dataset.o));
+      $$('.ch[data-c]', v).forEach(b => b.classList.toggle('on', b.dataset.c === cat));
       $('.cal', v).classList.toggle('on', ![0, 1, 2].some(o => day === t - o));
       dpi.value = iso(day);
       $('.bf', v).textContent = 'Было за ' + MN[ii.m].toLowerCase(); $('.bv', v).textContent = money(before);
@@ -459,7 +487,8 @@ function viewAdd() {
       btn.disabled = amt <= 0;
     };
     $('.bk1', v).onclick = () => history.back();
-    $$('.ch', v).forEach(b => (b.onclick = () => { day = t - +b.dataset.o; upd(); }));
+    $$('.ch[data-o]', v).forEach(b => (b.onclick = () => { day = t - +b.dataset.o; upd(); }));
+    $$('.ch[data-c]', v).forEach(b => (b.onclick = () => { cat = b.dataset.c; upd(); }));
     dpi.onchange = () => { if (dpi.value) day = Math.min(fromIso(dpi.value), t); upd(); };
     inp.oninput = () => { const dgt = inp.value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 9); amt = +dgt || 0; inp.value = dgt ? fmt(amt) : ''; upd(); };
     inp.onfocus = () => $('.amt', v).classList.add('f');
@@ -468,7 +497,7 @@ function viewAdd() {
     btn.onclick = () => {
       if (amt <= 0) return;
       if (document.activeElement) document.activeElement.blur();
-      E.push({ id: Date.now(), day, amount: amt, note: $('.note', v).value.trim() }); save();
+      E.push({ id: Date.now(), day, amount: amt, note: $('.note', v).value.trim(), cat }); save();
       btn.textContent = 'Сохранено'; btn.classList.add('ok');
       setTimeout(() => history.back(), 520);
     };
@@ -495,7 +524,7 @@ function importData(f, v) {
       const arr = JSON.parse(r.result);
       if (!Array.isArray(arr)) throw 0;
       const ids = new Set(E.map(x => x.id)); let added = 0;
-      arr.forEach(x => { if (x && Number.isFinite(x.id) && Number.isFinite(x.day) && Number.isFinite(x.amount) && !ids.has(x.id)) { E.push({ id: x.id, day: x.day, amount: x.amount, note: String(x.note || '') }); ids.add(x.id); added++; } });
+      arr.forEach(x => { if (x && Number.isFinite(x.id) && Number.isFinite(x.day) && Number.isFinite(x.amount) && !ids.has(x.id)) { E.push({ id: x.id, day: x.day, amount: x.amount, note: String(x.note || ''), cat: CATS.some(c => c.id === x.cat) ? x.cat : 'work' }); ids.add(x.id); added++; } });
       save(); lastTotal = 0; renderBody(v);
       alert('Добавлено записей: ' + added);
     } catch (e) { alert('Не удалось прочитать файл. Нужна копия, сохранённая из этого приложения.'); }

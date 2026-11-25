@@ -7,8 +7,17 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDate
 
-data class Entry(val id: Long, val day: Long, val amount: Long, val note: String) {
+/** Запись о доходе. cat: work — заработок, tips — чаевые, other — прочее. */
+data class Entry(val id: Long, val day: Long, val amount: Long, val note: String, val cat: String = "work") {
     val date: LocalDate get() = LocalDate.ofEpochDay(day)
+}
+
+private fun Entry.toJson(): JSONObject =
+    JSONObject().put("id", id).put("day", day).put("amount", amount).put("note", note).put("cat", cat)
+
+private fun JSONObject.toEntry(id: Long = getLong("id")): Entry {
+    val c = optString("cat", "work")
+    return Entry(id, getLong("day"), getLong("amount"), optString("note", ""), if (CATS.any { it.id == c }) c else "work")
 }
 
 /** Хранилище записей: JSON в SharedPreferences, список обновляет экран сам. */
@@ -21,26 +30,17 @@ class Store(context: Context) {
     init {
         val raw = prefs.getString("data", "[]") ?: "[]"
         val arr = JSONArray(raw)
-        for (i in 0 until arr.length()) {
-            val o = arr.getJSONObject(i)
-            entries.add(Entry(o.getLong("id"), o.getLong("day"), o.getLong("amount"), o.optString("note", "")))
-        }
-    }
-
-    private fun save() {
-        val arr = JSONArray()
-        entries.forEach {
-            arr.put(JSONObject().put("id", it.id).put("day", it.day).put("amount", it.amount).put("note", it.note))
-        }
-        prefs.edit().putString("data", arr.toString()).apply()
+        for (i in 0 until arr.length()) entries.add(arr.getJSONObject(i).toEntry())
     }
 
     private fun toJson(): String {
         val arr = JSONArray()
-        entries.forEach {
-            arr.put(JSONObject().put("id", it.id).put("day", it.day).put("amount", it.amount).put("note", it.note))
-        }
+        entries.forEach { arr.put(it.toJson()) }
         return arr.toString()
+    }
+
+    private fun save() {
+        prefs.edit().putString("data", toJson()).apply()
     }
 
     /** Копия записей в файл. Тот же формат, что у HTML-версии. */
@@ -60,9 +60,8 @@ class Store(context: Context) {
         var added = 0
         for (i in 0 until arr.length()) {
             val o = arr.getJSONObject(i)
-            val id = o.getLong("id")
-            if (have.add(id)) {
-                entries.add(Entry(id, o.getLong("day"), o.getLong("amount"), o.optString("note", "")))
+            if (have.add(o.getLong("id"))) {
+                entries.add(o.toEntry())
                 added++
             }
         }
@@ -72,8 +71,8 @@ class Store(context: Context) {
         -1
     }
 
-    fun add(date: LocalDate, amount: Long, note: String) {
-        entries.add(Entry(System.currentTimeMillis(), date.toEpochDay(), amount, note.trim()))
+    fun add(date: LocalDate, amount: Long, note: String, cat: String) {
+        entries.add(Entry(System.currentTimeMillis(), date.toEpochDay(), amount, note.trim(), cat))
         save()
     }
 
