@@ -1,6 +1,11 @@
 package app.earnings.tracker
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -188,6 +193,8 @@ fun OverviewScreen(store: Store, onOpenMonth: (YearMonth) -> Unit, onAdd: () -> 
                     Appear(4 + k, period) { MonthRow(ym, entries, k) { onOpenMonth(ym) } }
                 }
             }
+            Spacer(Modifier.height(24.dp))
+            BackupLinks(store)
         }
 
         val s = remember { Animatable(0f) }
@@ -207,6 +214,36 @@ fun OverviewScreen(store: Store, onOpenMonth: (YearMonth) -> Unit, onAdd: () -> 
             IconPlus(C.onGreen)
             Text("Добавить", color = C.onGreen, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
+    }
+}
+
+/** Копия записей в файл и обратно. Формат общий с HTML-версией приложения. */
+@Composable
+private fun BackupLinks(store: Store) {
+    val ctx = LocalContext.current
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) {
+            val ok = store.exportTo(ctx, uri)
+            Toast.makeText(ctx, if (ok) "Копия сохранена" else "Не удалось сохранить копию", Toast.LENGTH_SHORT).show()
+        }
+    }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            val n = store.importFrom(ctx, uri)
+            Toast.makeText(
+                ctx, if (n < 0) "Не удалось прочитать файл копии" else "Добавлено записей: $n", Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+    Column {
+        Text(
+            "Сохранить копию", color = C.muted, fontSize = 13.sp, textDecoration = TextDecoration.Underline,
+            modifier = Modifier.pressable { exportLauncher.launch("zarabotok-" + today() + ".json") }.padding(vertical = 12.dp)
+        )
+        Text(
+            "Загрузить копию", color = C.muted, fontSize = 13.sp, textDecoration = TextDecoration.Underline,
+            modifier = Modifier.pressable { importLauncher.launch(arrayOf("*/*")) }.padding(vertical = 12.dp)
+        )
     }
 }
 

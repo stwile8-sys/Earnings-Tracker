@@ -81,7 +81,7 @@ fun List<Entry>.weeksOf(ym: YearMonth): List<WeekPart> {
     while (!s.isAfter(last)) {
         val weekEnd = s.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
         val e = if (weekEnd.isAfter(last)) last else weekEnd
-        res.add(WeekPart(s, e, total(s, e), !t.isBefore(s) && !t.isAfter(e)))
+        if (!s.isAfter(t)) res.add(WeekPart(s, e, total(s, e), !t.isBefore(s) && !t.isAfter(e)))
         s = e.plusDays(1)
     }
     return res

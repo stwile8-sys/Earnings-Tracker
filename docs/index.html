@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0B0D10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Заработок">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<title>Заработок</title>
+<style>
+:root{--bg:#0B0D10;--s:#12151A;--s2:#222932;--ln:#1E232A;--tx:#E6EAEE;--mu:#8D96A0;--g:#3DDC97;--r:#FF6B6B;--bar:#556070;--og:#04210F;
+--mono:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace;--ease:cubic-bezier(.2,.8,.2,1);--spring:cubic-bezier(.34,1.56,.64,1)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:-apple-system,system-ui,"SF Pro Text","Roboto","Segoe UI",sans-serif;-webkit-text-size-adjust:100%}
+body{overflow:hidden;overscroll-behavior:none}
+#app{position:fixed;inset:0;max-width:520px;margin:0 auto;overflow:hidden}
+.view{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+padding:calc(16px + env(safe-area-inset-top)) 20px calc(120px + env(safe-area-inset-bottom));background:var(--bg)}
+.vin-r{animation:vinr .4s var(--ease) both}.vin-l{animation:vinl .4s var(--ease) both}
+.vout-l{animation:voutl .38s var(--ease) both;pointer-events:none}.vout-r{animation:voutr .38s var(--ease) both;pointer-events:none}
+@keyframes vinr{from{transform:translateX(34%);opacity:0}to{transform:none;opacity:1}}
+@keyframes vinl{from{transform:translateX(-20%);opacity:0}to{transform:none;opacity:1}}
+@keyframes voutl{to{transform:translateX(-20%);opacity:0}}
+@keyframes voutr{to{transform:translateX(34%);opacity:0}}
+.ap{animation:ap .5s var(--ease) backwards;animation-delay:calc(var(--i,0)*60ms)}
+@keyframes ap{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+.noanim .ap{animation:none}
+.pr{transition:transform .3s var(--spring);cursor:pointer;user-select:none;-webkit-user-select:none}
+.pr:active{transform:scale(.95)}
+button{font:inherit;color:inherit;border:0;background:none;padding:0}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.mu{color:var(--mu)}
+.lbl{font:500 12px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mu)}
+.tabs{position:relative;display:flex;height:52px;padding:4px;border-radius:14px;background:var(--s)}
+.tabs .ind{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/3);border-radius:10px;background:var(--s2);transition:transform .45s var(--spring)}
+.tabs button{position:relative;flex:1;font-size:15px;font-weight:500;color:var(--mu);transition:color .25s}
+.tabs button.on{color:var(--tx)}
+.tot{font:600 44px/1 var(--mono);letter-spacing:-.03em;margin-top:8px;white-space:nowrap}
+.dl{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:14px;color:var(--mu);min-height:28px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;font:600 13px var(--mono);animation:pop .7s var(--spring) .6s both}
+.chip.up{color:var(--g);background:rgba(61,220,151,.14)}.chip.dn{color:var(--r);background:rgba(255,107,107,.14)}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+.tri{width:0;height:0;border-left:4.5px solid transparent;border-right:4.5px solid transparent;border-bottom:8px solid currentColor}
+.dn .tri,.dt.dn .tri{transform:rotate(180deg)}
+canvas.chart{display:block;width:100%;height:210px;margin-top:20px}
+canvas.spark{width:64px;height:28px;flex:none}
+.tiles{display:flex;gap:12px;margin-top:16px}
+.tile{flex:1;min-width:0;border-radius:14px;background:var(--s);padding:14px 16px}
+.tile b{display:block;font:600 20px/1.3 var(--mono);margin-top:4px;white-space:nowrap}
+.tile small{display:block;font-size:12px;color:var(--mu);margin-top:2px}
+h2{font-size:18px;font-weight:600;margin:24px 0 4px}
+.hd{display:flex;align-items:flex-end;justify-content:space-between}.hd span{font-size:12px;color:var(--mu)}
+.row{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--ln)}
+.mrow{height:72px}.drow{height:60px}
+.row .nm{flex:1;min-width:0}.row .nm b{display:block;font-size:17px;font-weight:600}.row .nm small{display:block;font-size:13px;color:var(--mu);margin-top:2px;white-space:nowrap}
+.right{width:104px;text-align:right}.right b{display:block;font:600 16px var(--mono);white-space:nowrap}
+.dt{display:inline-flex;align-items:center;gap:4px;font:500 13px var(--mono);margin-top:2px}.dt.up{color:var(--g)}.dt.dn{color:var(--r)}.dt.nn{color:var(--mu)}
+.chev{width:18px;height:18px;flex:none;transition:transform .35s var(--spring)}
+.empty{border-radius:14px;background:var(--s);padding:20px;margin-top:24px}.empty b{font-size:17px}.empty p{margin:6px 0 0;color:var(--mu);font-size:14px;line-height:1.45}
+.fab{position:fixed;right:max(20px,calc(50% - 240px));bottom:calc(20px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:10px;height:56px;padding:0 22px 0 18px;border-radius:16px;background:var(--g);color:var(--og);font-size:16px;font-weight:600;animation:fab .6s var(--spring) .7s backwards;box-shadow:0 8px 24px rgba(61,220,151,.25)}
+@keyframes fab{from{transform:scale(0);opacity:0}to{transform:none;opacity:1}}
+.top{display:flex;align-items:center;gap:14px}.top h1{margin:0;font-size:22px;font-weight:600;letter-spacing:-.01em}.top small{display:block;font-size:13px;color:var(--mu);margin-top:2px}
+.sq{width:44px;height:44px;border-radius:12px;background:var(--s);display:flex;align-items:center;justify-content:center;flex:none;position:relative;transition:background .25s,color .25s,transform .3s var(--spring)}
+.sq.on{background:var(--tx);color:var(--bg)}
+.th{display:flex;align-items:center;height:32px;border-bottom:1px solid var(--ln);margin-top:20px}
+.th .lbl{font-size:11px}
+.wk{border-bottom:1px solid var(--ln)}
+.wk .hr{display:flex;align-items:center;height:58px}
+.wk .nm{flex:1}.wk .nm b{display:block;font-size:15px;font-weight:600}.wk .nm small{font-size:12px;color:var(--mu)}
+.wk .sm{width:100px;font:600 15px var(--mono);white-space:nowrap}.wk .dd{width:74px}
+.gb{height:5px;border-radius:3px;background:var(--ln);overflow:hidden}.gb i{display:block;height:100%;width:0;border-radius:3px;transition:width .9s var(--ease)}
+.xp{display:grid;grid-template-rows:0fr;transition:grid-template-rows .38s var(--ease)}.xp.open{grid-template-rows:1fr}.xp>div{overflow:hidden}
+.er{display:flex;align-items:center;min-height:52px;margin-top:4px;padding-left:14px;border-radius:10px;background:var(--s);transition:opacity .3s,transform .3s;overflow:hidden}
+.er.gone{opacity:0;transform:translateX(30px)}
+.er .nm{flex:1;min-width:0}.er .nm b{font-size:14px;font-weight:500;display:block}.er .nm small{font-size:12px;color:var(--mu)}
+.er .am{font:500 14px var(--mono);white-space:nowrap}
+.er .x{width:48px;height:48px;display:flex;align-items:center;justify-content:center}
+.chips{display:flex;gap:6px;margin-top:8px}
+.ch{height:44px;padding:0 13px;white-space:nowrap;border-radius:12px;background:var(--s);font-size:15px;font-weight:500;transition:background .25s,color .25s,transform .3s var(--spring)}
+.ch.on{background:var(--tx);color:var(--bg)}.ch:active{transform:scale(.95)}
+.dp{position:relative}.dp input{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px}
+.amt{display:flex;align-items:center;gap:8px;height:96px;padding:0 18px;border-radius:16px;background:var(--s);border:1px solid var(--ln);margin-top:8px;transition:border-color .25s,box-shadow .25s}
+.amt.f,.amt.v{border-color:var(--g)}.amt.f{box-shadow:inset 0 0 0 1px var(--g)}
+.amt input{flex:1;min-width:0;width:100%;background:none;border:0;outline:0;color:var(--tx);font:600 44px var(--mono);letter-spacing:-.03em;caret-color:var(--g)}
+.amt input::placeholder{color:var(--mu)}.amt span{font:500 30px var(--mono);color:var(--mu)}
+.qs{display:flex;gap:8px;margin-top:12px}.qs button{flex:1;height:44px;border-radius:12px;background:var(--s);border:1px solid var(--ln);font:500 14px var(--mono)}
+.note{width:100%;height:56px;margin-top:8px;padding:0 18px;border-radius:14px;background:var(--s);border:1px solid var(--ln);outline:0;color:var(--tx);font-size:16px}
+.note:focus{border-color:var(--g)}.note::placeholder{color:var(--mu)}
+.sumc{border-radius:14px;background:var(--s);padding:16px;margin-top:24px}
+.sl{display:flex;justify-content:space-between;align-items:center;height:28px;font-size:14px;color:var(--mu)}.sl b{font:500 14px var(--mono);color:var(--tx)}.sl b.g{color:var(--g)}
+.sumc hr{border:0;border-top:1px solid var(--ln);margin:10px 0}
+.save{position:fixed;left:max(20px,calc(50% - 240px));right:max(20px,calc(50% - 240px));bottom:calc(20px + env(safe-area-inset-bottom));height:56px;border-radius:16px;background:var(--g);color:var(--og);font-size:17px;font-weight:600;transition:opacity .3s,background .3s,transform .3s var(--spring)}
+.save:disabled{opacity:.4}.save.ok{background:var(--tx);opacity:1}.save:not(:disabled):active{transform:scale(.97)}
+.body{display:flex;flex-direction:column;min-height:calc(100vh - 190px - env(safe-area-inset-top) - env(safe-area-inset-bottom));min-height:calc(100dvh - 190px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+.bk{display:flex;flex-direction:column;align-items:flex-start;margin-top:auto;padding-top:24px;font-size:13px}.bk button{color:var(--mu);text-decoration:underline;padding:8px 0}
+.sec{margin-top:24px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+const NB = ' ';
+const MONO = 'ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace';
+const MN = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const MS = ['янв','фев','мар','апр','май','июн','июл','авг','сент','окт','нояб','дек'];
+const MG = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const WF = ['понедельник','вторник','среда','четверг','пятница','суббота','воскресенье'];
+const WS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+const PN = { w: 'Неделя', m: 'Месяц', y: 'Год' };
+
+const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, NB);
+const money = n => fmt(n) + NB + '₽';
+const short = v => { if (v < 1000) return String(v); const k = v / 1000; return (k >= 10 || k === Math.floor(k) ? String(Math.floor(k)) : k.toFixed(1).replace('.', ',')) + 'к'; };
+const tagNum = v => v < 1000 ? String(v) : (v / 1000).toFixed(1).replace('.', ',').replace(/,0$/, '') + 'к';
+const pct = p => (p >= 0 ? '+' : '−') + Math.abs(p).toFixed(1).replace('.', ',') + '%';
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+// Дни считаем целыми числами (сутки от 1970 года), чтобы не путаться с часовыми поясами.
+const dayOf = (y, m, d) => Math.floor(Date.UTC(y, m, d) / 864e5);
+const info = n => { const x = new Date(n * 864e5); return { y: x.getUTCFullYear(), m: x.getUTCMonth(), d: x.getUTCDate(), w: (x.getUTCDay() + 6) % 7 }; };
+const today = () => { const t = new Date(); return dayOf(t.getFullYear(), t.getMonth(), t.getDate()); };
+const dm = n => { const i = info(n); return i.d + ' ' + MS[i.m]; };
+const full = n => { const i = info(n); return i.d + ' ' + MG[i.m] + ' ' + i.y; };
+const rangeLbl = (a, b) => { if (a === b) return dm(a); const x = info(a), y = info(b); return x.m === y.m ? x.d + '–' + y.d + ' ' + MS[x.m] : dm(a) + ' – ' + dm(b); };
+const iso = n => { const i = info(n); return i.y + '-' + String(i.m + 1).padStart(2, '0') + '-' + String(i.d).padStart(2, '0'); };
+const fromIso = s => { const [y, m, d] = s.split('-').map(Number); return dayOf(y, m - 1, d); };
+
+// ---- хранение ----
+let E = [];
+try { E = JSON.parse(localStorage.getItem('earnings') || '[]'); if (!Array.isArray(E)) E = []; } catch (e) { E = []; }
+const save = () => { try { const j = JSON.stringify(E); localStorage.setItem('earnings', j); localStorage.setItem('earnings_bak', j); } catch (e) {} };
+try { if (!E.length) { const b = JSON.parse(localStorage.getItem('earnings_bak') || '[]'); if (Array.isArray(b) && b.length) E = b; } } catch (e) {}
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+
+// ---- расчёты ----
+const sum = (a, b, L = E) => L.reduce((s, x) => (x.day >= a && x.day <= b ? s + x.amount : s), 0);
+const daily = (a, b) => { const r = new Array(Math.max(b - a + 1, 0)).fill(0); E.forEach(x => { if (x.day >= a && x.day <= b) r[x.day - a] += x.amount; }); return r; };
+const cumul = a => { let s = 0; return a.map(v => (s += v)); };
+const spanOf = (p, n) => {
+  const i = info(n);
+  if (p === 'w') { const s = n - i.w; return { s, e: s + 6 }; }
+  if (p === 'm') return { s: dayOf(i.y, i.m, 1), e: dayOf(i.y, i.m + 1, 0) };
+  return { s: dayOf(i.y, 0, 1), e: dayOf(i.y, 11, 31) };
+};
+const back = (p, n) => { const i = info(n); return p === 'w' ? n - 7 : p === 'm' ? dayOf(i.y, i.m - 1, 1) : dayOf(i.y - 1, 0, 1); };
+const elapsed = sp => { const e = Math.min(sp.e, today()); return { s: sp.s, e: e < sp.s ? sp.s : e }; };
+// Изменение к прошлому периоду за то же число прошедших дней.
+function delta(p, n, L = E) {
+  const cur = elapsed(spanOf(p, n));
+  const cs = sum(cur.s, cur.e, L);
+  const pf = spanOf(p, back(p, n));
+  const pe = Math.min(pf.s + (cur.e - cur.s), pf.e);
+  const ps = sum(pf.s, pe, L);
+  return ps > 0 ? (cs - ps) * 100 / ps : null;
+}
+function weeksOf(y, m) {
+  const f = dayOf(y, m, 1), l = dayOf(y, m + 1, 0), t = today(), r = [];
+  let s = f;
+  while (s <= l) { const e = Math.min(s + (6 - info(s).w), l); r.push({ s, e, sum: sum(s, e), cur: t >= s && t <= e }); s = e + 1; }
+  return r;
+}
+function monthsList() {
+  const set = new Set(E.map(x => { const i = info(x.day); return i.y * 12 + i.m; }));
+  const t = info(today()); set.add(t.y * 12 + t.m);
+  return [...set].sort((a, b) => b - a).map(k => ({ y: Math.floor(k / 12), m: k % 12 }));
+}
+
+// ---- анимации ----
+function countUp(el, to, dur = 1000) {
+  const from = el._v || 0;
+  cancelAnimationFrame(el._r);
+  const t0 = performance.now();
+  const step = now => {
+    const t = clamp((now - t0) / dur, 0, 1), p = 1 - Math.pow(1 - t, 3);
+    el.textContent = money(from + (to - from) * p);
+    if (t < 1 && el.isConnected) el._r = requestAnimationFrame(step); else { el.textContent = money(to); el._v = to; }
+  };
+  el._r = requestAnimationFrame(step);
+}
+
+function niceCeil(v) {
+  if (v <= 0) return 1;
+  const mag = Math.pow(10, Math.floor(Math.log10(v))), n = v / mag;
+  return Math.ceil((n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * mag);
+}
+
+function setup(cv) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  const W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const c = cv.getContext('2d'); c.scale(dpr, dpr);
+  return { c, W, H };
+}
+
+/* Биржевой график: линия и заливка выезжают слева направо, столбики дней растут вслед,
+   на конце пульсирует точка с меткой суммы. o: {cum,total,labels,bars,seps} */
+function chart(cv, o) {
+  const { c, W, H } = setup(cv);
+  const cum = o.cum, n = cum.length;
+  if (!n) return;
+  const days = Math.max(o.total, n);
+  const rp = 52, lh = 22, bh = o.bars ? 44 : 0, bg = o.bars ? 10 : 0, pw = W - rp, top = 10, lb = H - lh - bh - bg;
+  const last = cum[n - 1], nm = niceCeil(Math.max(last, 1));
+  const X = i => (days <= 1 ? 0 : pw * i / (days - 1)), Y = v => lb - v / nm * (lb - top);
+  const t0 = performance.now(), DUR = 1300;
+  const maxBar = o.bars ? Math.max(1, ...o.bars) : 1;
+  function draw(p, now) {
+    c.clearRect(0, 0, W, H);
+    c.font = '11px ' + MONO; c.textBaseline = 'middle';
+    [0, nm / 2, nm].forEach((v, k) => {
+      const y = Y(v);
+      c.strokeStyle = '#1E232A'; c.lineWidth = 1; c.setLineDash(k ? [3, 4] : []);
+      c.beginPath(); c.moveTo(0, y); c.lineTo(pw, y); c.stroke(); c.setLineDash([]);
+      c.fillStyle = '#8D96A0'; c.textAlign = 'left'; c.fillText(short(Math.round(v)), pw + 8, y);
+    });
+    const base = lb + bg + bh;
+    (o.seps || []).forEach(i => {
+      c.strokeStyle = '#2A323C'; c.setLineDash([2, 4]); c.beginPath(); c.moveTo(X(i), top); c.lineTo(X(i), base); c.stroke(); c.setLineDash([]);
+    });
+    const xl = X(n - 1);
+    c.save(); c.beginPath(); c.rect(0, 0, xl * p + 1, H); c.clip();
+    const g = c.createLinearGradient(0, top, 0, lb);
+    g.addColorStop(0, 'rgba(61,220,151,.22)'); g.addColorStop(1, 'rgba(61,220,151,0)');
+    c.beginPath(); cum.forEach((v, i) => (i ? c.lineTo(X(i), Y(v)) : c.moveTo(X(i), Y(v))));
+    c.lineTo(xl, lb); c.lineTo(X(0), lb); c.closePath(); c.fillStyle = g; c.fill();
+    c.beginPath(); cum.forEach((v, i) => (i ? c.lineTo(X(i), Y(v)) : c.moveTo(X(i), Y(v))));
+    c.strokeStyle = '#3DDC97'; c.lineWidth = 2; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke();
+    c.restore();
+    if (o.bars) {
+      c.strokeStyle = '#1E232A'; c.beginPath(); c.moveTo(0, base); c.lineTo(pw, base); c.stroke();
+      const bw = Math.max(2, Math.min(8, pw / days * .6));
+      o.bars.forEach((v, i) => {
+        if (v <= 0) return;
+        const h = v / maxBar * bh * clamp(p * (n + 3) - i, 0, 1);
+        c.fillStyle = 'rgba(61,220,151,.55)'; c.beginPath();
+        if (c.roundRect) c.roundRect(X(i) - bw / 2, base - h, bw, h, 2); else c.rect(X(i) - bw / 2, base - h, bw, h);
+        c.fill();
+      });
+    }
+    c.fillStyle = '#8D96A0'; c.textAlign = 'center';
+    (o.labels || []).forEach(([i, t]) => { const w = c.measureText(t).width; c.fillText(t, clamp(X(i), w / 2, pw - w / 2), H - 9); });
+    const ma = clamp((p - .88) / .12, 0, 1);
+    if (ma > 0) {
+      const y = Y(last), pu = (now % 1700) / 1700;
+      c.fillStyle = 'rgba(61,220,151,' + (.35 * (1 - pu) * ma) + ')'; c.beginPath(); c.arc(xl, y, 6 + 12 * pu, 0, 7); c.fill();
+      c.fillStyle = 'rgba(61,220,151,' + ma + ')'; c.beginPath(); c.arc(xl, y, 4 * ma, 0, 7); c.fill();
+      c.font = '600 11px ' + MONO;
+      const tx = tagNum(last), w = c.measureText(tx).width + 12, tl = Math.min(xl + 10, W - w);
+      c.fillStyle = 'rgba(61,220,151,' + ma + ')'; c.beginPath();
+      if (c.roundRect) c.roundRect(tl, y - 9, w, 18, 4); else c.rect(tl, y - 9, w, 18);
+      c.fill();
+      c.fillStyle = 'rgba(4,33,15,' + ma + ')'; c.textAlign = 'left'; c.fillText(tx, tl + 6, y + .5);
+    }
+  }
+  const frame = now => {
+    if (!cv.isConnected) return;
+    const t = clamp((now - t0) / DUR, 0, 1);
+    draw(1 - Math.pow(1 - t, 3), now);
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+
+/* Мини-график в строке месяца: рисуется слева направо с задержкой. */
+function spark(cv, vals, color, delay) {
+  const { c, W, H } = setup(cv);
+  const t0 = performance.now() + delay, pad = 2;
+  const lo = Math.min(...vals), hi = Math.max(...vals), sp = hi - lo < 1 ? 1 : hi - lo;
+  const pts = vals.length < 2 ? [[0, H / 2], [W, H / 2]] : vals.map((v, i) => [W * i / (vals.length - 1), pad + (H - 2 * pad) * (1 - (v - lo) / sp)]);
+  const frame = now => {
+    if (!cv.isConnected) return;
+    const t = clamp((now - t0) / 900, 0, 1), p = 1 - Math.pow(1 - t, 3);
+    c.clearRect(0, 0, W, H);
+    c.save(); c.beginPath(); c.rect(0, 0, W * p + 1, H); c.clip();
+    c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y)));
+    c.strokeStyle = color; c.lineWidth = 2; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(); c.restore();
+    if (t < 1) requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+
+// ---- мелочи ----
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const mk = html => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstElementChild; };
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const svg = (d, w = 22) => `<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const IC = {
+  back: svg('<path d="M15 6l-6 6 6 6"/>'),
+  plus: svg('<path d="M12 5v14M5 12h14"/>'),
+  x: svg('<path d="M6 6l12 12M18 6L6 18"/>', 18),
+  cal: svg('<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/>', 20),
+  chev: o => `<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="#8D96A0" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"${o ? ' style="transform:rotate(90deg)"' : ''}><path d="M9 6l6 6-6 6"/></svg>`,
+};
+const chip = d => d == null ? '' : `<span class="chip ${d >= 0 ? 'up' : 'dn'}"><i class="tri"></i>${pct(d)}</span>`;
+const dtxt = d => d == null ? '<span class="dt nn">—</span>' : `<span class="dt ${d >= 0 ? 'up' : 'dn'}"><i class="tri"></i>${pct(d)}</span>`;
+const tile = (t, v, n) => `<div class="tile"><span class="mu" style="font-size:12px">${t}</span><b>${v}</b><small>${n}</small></div>`;
+
+// ---- обзор ----
+let period = 'm', lastTotal = 0;
+
+function viewOverview() {
+  const v = mk(`<div class="view"><div class="ap" style="--i:0"><div class="tabs"><div class="ind"></div>${['w', 'm', 'y'].map(p => `<button class="pr" data-p="${p}">${PN[p]}</button>`).join('')}</div></div><div class="body"></div><button class="fab pr">${IC.plus}Добавить</button></div>`);
+  const tabs = $('.tabs', v);
+  const sync = () => {
+    $('.ind', tabs).style.transform = `translateX(${['w', 'm', 'y'].indexOf(period) * 100}%)`;
+    $$('button', tabs).forEach(b => b.classList.toggle('on', b.dataset.p === period));
+  };
+  sync();
+  tabs.onclick = e => { const b = e.target.closest('button'); if (!b || b.dataset.p === period) return; period = b.dataset.p; sync(); renderBody(v); };
+  $('.fab', v).onclick = () => nav('a');
+  v._mount = () => renderBody(v);
+  return v;
+}
+
+function renderBody(v) {
+  const body = $('.body', v);
+  const t = today(), sp = spanOf(period, t), el = elapsed(sp), days = daily(el.s, el.e), cum = cumul(days);
+  const total = cum.length ? cum[cum.length - 1] : 0, totalDays = sp.e - sp.s + 1, d = delta(period, t), ti = info(sp.s);
+  const title = period === 'w' ? rangeLbl(sp.s, sp.e) : period === 'm' ? MN[ti.m] + ' ' + ti.y : String(ti.y);
+  const vs = { w: 'к прошлой неделе', m: 'к прошлому месяцу', y: 'к прошлому году' }[period];
+  const labels = period === 'w' ? [0, 1, 2, 3, 4, 5, 6].map(i => [i, WS[i]])
+    : period === 'm' ? [...new Set([0, 7, 14, 21, totalDays - 1])].filter(i => i < totalDays).map(i => [i, String(i + 1)])
+    : [0, 2, 4, 6, 8, 10].map(m => [dayOf(ti.y, m, 1) - sp.s, MS[m]]);
+  const wk = elapsed(spanOf('w', t)), wkTotal = sum(wk.s, wk.e);
+  const best = Math.max(0, ...days), avg = days.length ? Math.round(total / days.length) : 0;
+  const bestDay = best > 0 ? el.s + days.indexOf(best) : null;
+
+  let html = `<div class="ap" style="--i:1;margin-top:24px"><div class="lbl">Итого · ${title}</div><div class="tot"></div><div class="dl">${chip(d)}<span>${d == null ? 'пока не с чем сравнить' : vs}</span></div></div>
+<div class="ap" style="--i:2"><canvas class="chart"></canvas></div>
+<div class="tiles ap" style="--i:3">${period === 'w' ? tile('Среднее в день', money(avg), 'за ' + days.length + ' дн.') : tile('Эта неделя', money(wkTotal), rangeLbl(wk.s, wk.e))}${tile('Лучший день', bestDay == null ? '—' : money(best), bestDay == null ? 'пока нет' : dm(bestDay))}</div>`;
+
+  const sparks = [];
+  if (!E.length) {
+    html += `<div class="empty ap" style="--i:4"><b>Пока нет записей</b><p>Нажмите «Добавить», выберите дату и впишите, сколько заработали. График и месяцы появятся сами.</p></div>`;
+  } else if (period === 'w') {
+    html += '<h2>По дням</h2>';
+    for (let i = days.length - 1, k = 0; i >= 0; i--, k++) {
+      const day = el.s + i, di = info(day);
+      html += `<div class="row drow ap" style="--i:${4 + k}"><div class="nm"><b style="font-size:16px;font-weight:500">${di.d} ${MG[di.m]}</b><small>${WF[di.w]}</small></div><b class="mono" style="font-size:16px;${days[i] ? '' : 'color:var(--mu)'}">${days[i] ? '+' + money(days[i]) : '—'}</b></div>`;
+    }
+  } else {
+    html += '<div class="hd"><h2>По месяцам</h2><span>Нажмите — откроются недели</span></div>';
+    const cur = info(t);
+    monthsList().filter(x => period === 'm' || x.y === cur.y).forEach((x, k) => {
+      const first = dayOf(x.y, x.m, 1), s2 = elapsed(spanOf('m', first)), c2 = cumul(daily(s2.s, s2.e));
+      const s = c2.length ? c2[c2.length - 1] : 0, dl = delta('m', first), isCur = x.y === cur.y && x.m === cur.m;
+      sparks.push([c2, dl != null && dl < 0 ? '#FF6B6B' : s > 0 ? '#3DDC97' : '#8D96A0']);
+      html += `<div class="row mrow pr ap" style="--i:${4 + k}" data-y="${x.y}" data-m="${x.m}"><div class="nm"><b>${MN[x.m]}</b><small>${rangeLbl(s2.s, s2.e)}${isCur ? ' · идёт' : ''}</small></div><canvas class="spark"></canvas><div class="right"><b>${money(s)}</b>${dtxt(dl)}</div>${IC.chev()}</div>`;
+    });
+  }
+  html += `<div class="bk"><button class="ex">Сохранить копию</button><button class="im">Загрузить копию</button><input class="fi" type="file" accept=".json,application/json" hidden></div>`;
+  body.innerHTML = html;
+
+  const tot = $('.tot', body); tot._v = lastTotal; countUp(tot, total); lastTotal = total;
+  chart($('canvas.chart', body), { cum, total: totalDays, labels, bars: period === 'y' ? null : days });
+  $$('.mrow', body).forEach((r, k) => {
+    spark($('canvas', r), sparks[k][0], sparks[k][1], 300 + k * 120);
+    r.onclick = () => nav('m', { y: +r.dataset.y, m: +r.dataset.m });
+  });
+  $('.ex', body).onclick = exportData;
+  $('.im', body).onclick = () => $('.fi', body).click();
+  $('.fi', body).onchange = e => importData(e.target.files[0], v);
+}
+
+// ---- месяц по неделям ----
+let openWeek = -1;
+
+function viewMonth(a) {
+  const v = mk('<div class="view"></div>');
+  openWeek = -1;
+  v._mount = () => renderMonth(v, a.y, a.m, true);
+  return v;
+}
+
+function renderMonth(v, y, m, anim) {
+  v.classList.toggle('noanim', !anim);
+  const keep = v.scrollTop;
+  const first = dayOf(y, m, 1), last = dayOf(y, m + 1, 0), sp = elapsed({ s: first, e: last });
+  const days = daily(sp.s, sp.e), cum = cumul(days), total = cum.length ? cum[cum.length - 1] : 0;
+  const d = delta('m', first), weeks = weeksOf(y, m), totalDays = last - first + 1;
+  const seps = weeks.slice(1).map(w => w.s - first);
+  const labels = weeks.map(w => [((w.s - first) + (w.e - first)) / 2, w.s === w.e ? String(info(w.s).d) : info(w.s).d + '–' + info(w.e).d]);
+  const maxSum = Math.max(0, ...weeks.map(w => w.sum)), bestSum = Math.max(0, ...weeks.filter(w => !w.cur).map(w => w.sum));
+  const best = Math.max(0, ...days), avg = days.length ? Math.round(total / days.length) : 0;
+  const bestDay = best > 0 ? sp.s + days.indexOf(best) : null;
+
+  let html = `<div class="top ap" style="--i:0"><button class="sq pr bk1">${IC.back}</button><div><h1>${MN[m]} ${y}</h1><small>По неделям</small></div></div>
+<div class="ap" style="--i:1;margin-top:24px"><div class="lbl">Итого за месяц</div><div class="tot"></div><div class="dl">${chip(d)}<span>${d == null ? 'пока не с чем сравнить' : 'к прошлому месяцу'}</span></div></div>
+<div class="ap" style="--i:2"><canvas class="chart" style="height:230px"></canvas></div>
+<div class="th ap" style="--i:3"><span class="lbl" style="flex:1">Неделя</span><span class="lbl" style="width:100px">Сумма</span><span class="lbl" style="width:74px">К пред.</span><span style="width:18px"></span></div>`;
+  let k = -1;
+  for (let i = weeks.length - 1; i >= 0; i--) {
+    if (weeks[i].s > today()) continue;
+    k++;
+    const w = weeks[i], prev = i > 0 ? weeks[i - 1].sum : 0, n = w.e - w.s + 1;
+    const wd = i > 0 && !w.cur && prev > 0 ? (w.sum - prev) * 100 / prev : null;
+    const isBest = !w.cur && w.sum > 0 && w.sum === bestSum, open = openWeek === w.s;
+    const es = E.filter(x => x.day >= w.s && x.day <= w.e).sort((p, q) => q.day - p.day || q.id - p.id);
+    const list = es.length ? es.map(x => `<div class="er" data-id="${x.id}"><div class="nm"><b>${dm(x.day)} · ${WS[info(x.day).w]}</b>${x.note ? `<small>${esc(x.note)}</small>` : ''}</div><div class="am">+${money(x.amount)}</div><button class="x pr" aria-label="Удалить запись">${IC.x}</button></div>`).join('')
+      : '<div class="mu" style="padding:8px 0;font-size:14px">На этой неделе записей нет</div>';
+    html += `<div class="wk ap" style="--i:${4 + k}" data-s="${w.s}"><div class="hr pr"><div class="nm"><b>${rangeLbl(w.s, w.e)}</b><small style="color:${isBest ? 'var(--g)' : 'var(--mu)'}">${w.cur ? 'идёт · ' + n + ' дн.' : isBest ? 'лучшая неделя' : n + ' дн.'}</small></div><div class="sm">${money(w.sum)}</div><div class="dd">${dtxt(wd)}</div>${IC.chev(open)}</div><div class="gb"><i data-f="${maxSum ? w.sum / maxSum : 0}" style="background:${isBest ? 'var(--g)' : 'var(--bar)'}"></i></div><div class="xp${open ? ' open' : ''}"><div><div style="height:10px"></div>${list}<div style="height:6px"></div></div></div></div>`;
+  }
+  html += `<div class="tiles ap" style="--i:${6 + k};margin-top:20px">${tile('Среднее в день', money(avg), 'за ' + days.length + ' дн.')}${tile('Лучший день', bestDay == null ? '—' : money(best), bestDay == null ? 'пока нет' : dm(bestDay))}</div>`;
+  v.innerHTML = html;
+  v.scrollTop = keep;
+
+  $('.bk1', v).onclick = () => history.back();
+  const tot = $('.tot', v); tot._v = 0; countUp(tot, total);
+  chart($('canvas.chart', v), { cum, total: totalDays, labels, bars: days, seps });
+  $$('.gb i', v).forEach((el, k) => setTimeout(() => (el.style.width = (+el.dataset.f * 100) + '%'), 500 + k * 140));
+  $$('.wk', v).forEach(wk => {
+    $('.hr', wk).onclick = () => {
+      const s = +wk.dataset.s; openWeek = openWeek === s ? -1 : s;
+      $$('.wk', v).forEach(o => {
+        const op = +o.dataset.s === openWeek;
+        $('.xp', o).classList.toggle('open', op);
+        $('.chev', o).style.transform = op ? 'rotate(90deg)' : '';
+      });
+    };
+  });
+  $$('.er .x', v).forEach(b => (b.onclick = () => {
+    const row = b.closest('.er'); row.classList.add('gone');
+    setTimeout(() => { E = E.filter(x => x.id !== +row.dataset.id); save(); renderMonth(v, y, m, false); }, 300);
+  }));
+}
+
+// ---- новая запись ----
+function viewAdd() {
+  const v = mk('<div class="view"></div>');
+  v._mount = () => {
+    const t = today();
+    let day = t, amt = 0;
+    v.innerHTML = `<div class="top ap" style="--i:0"><button class="sq pr bk1">${IC.back}</button><div><h1>Новая запись</h1><small class="mo"></small></div></div>
+<div class="sec ap" style="--i:1"><div class="lbl">Дата</div><div class="chips"><button class="ch" data-o="0">Сегодня</button><button class="ch" data-o="1">Вчера</button><button class="ch" data-o="2">Позавчера</button><div class="dp sq cal">${IC.cal}<input type="date" max="${iso(t)}" aria-label="Выбрать другую дату"></div></div><div class="mu dtl" style="margin-top:8px;font-size:14px"></div></div>
+<div class="sec ap" style="--i:2"><div class="lbl">Сумма</div><div class="amt"><input class="ai" inputmode="numeric" autocomplete="off" placeholder="0" aria-label="Сумма"><span>₽</span></div><div class="qs">${[500, 1000, 5000, 10000].map(a => `<button class="pr" data-a="${a}">+${fmt(a)}</button>`).join('')}</div></div>
+<div class="sec ap" style="--i:3"><div class="lbl">Заметка · необязательно</div><input class="note" maxlength="80" placeholder="Например, имя клиента или место"></div>
+<div class="sumc ap" style="--i:4"><div class="sl"><span class="bf"></span><b class="bv"></b></div><div class="sl"><span>Эта запись</span><b class="g ev"></b></div><hr><div class="sl" style="height:auto"><span>Станет</span><div style="text-align:right"><b class="af" style="font:600 20px var(--mono);display:block;color:var(--tx)"></b><span class="dd2"></span></div></div></div>
+<button class="save" disabled>Сохранить запись</button>`;
+    const inp = $('.ai', v), dpi = $('.dp input', v), btn = $('.save', v);
+    const upd = () => {
+      const ii = info(day), f = dayOf(ii.y, ii.m, 1), l = dayOf(ii.y, ii.m + 1, 0), before = sum(f, l);
+      $('.mo', v).textContent = MN[ii.m] + ' ' + ii.y;
+      $('.dtl', v).textContent = WF[ii.w][0].toUpperCase() + WF[ii.w].slice(1) + ', ' + full(day);
+      $$('.ch', v).forEach(b => b.classList.toggle('on', day === t - +b.dataset.o));
+      $('.cal', v).classList.toggle('on', ![0, 1, 2].some(o => day === t - o));
+      dpi.value = iso(day);
+      $('.bf', v).textContent = 'Было за ' + MN[ii.m].toLowerCase(); $('.bv', v).textContent = money(before);
+      $('.ev', v).textContent = '+' + money(amt);
+      countUp($('.af', v), before + amt, 450);
+      $('.dd2', v).innerHTML = amt > 0 ? dtxt(delta('m', day, E.concat([{ day, amount: amt }]))) : '';
+      $('.amt', v).classList.toggle('v', amt > 0);
+      btn.disabled = amt <= 0;
+    };
+    $('.bk1', v).onclick = () => history.back();
+    $$('.ch', v).forEach(b => (b.onclick = () => { day = t - +b.dataset.o; upd(); }));
+    dpi.onchange = () => { if (dpi.value) day = Math.min(fromIso(dpi.value), t); upd(); };
+    inp.oninput = () => { const dgt = inp.value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 9); amt = +dgt || 0; inp.value = dgt ? fmt(amt) : ''; upd(); };
+    inp.onfocus = () => $('.amt', v).classList.add('f');
+    inp.onblur = () => $('.amt', v).classList.remove('f');
+    $$('.qs button', v).forEach(b => (b.onclick = () => { amt = Math.min(amt + +b.dataset.a, 999999999); inp.value = fmt(amt); upd(); }));
+    btn.onclick = () => {
+      if (amt <= 0) return;
+      if (document.activeElement) document.activeElement.blur();
+      E.push({ id: Date.now(), day, amount: amt, note: $('.note', v).value.trim() }); save();
+      btn.textContent = 'Сохранено'; btn.classList.add('ok');
+      setTimeout(() => history.back(), 520);
+    };
+    $('.af', v)._v = 0; upd();
+  };
+  return v;
+}
+
+// ---- резервная копия ----
+async function exportData() {
+  const name = 'zarabotok-' + iso(today()) + '.json';
+  const file = new File([JSON.stringify(E)], name, { type: 'application/json' });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Копия записей' }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function importData(f, v) {
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const arr = JSON.parse(r.result);
+      if (!Array.isArray(arr)) throw 0;
+      const ids = new Set(E.map(x => x.id)); let added = 0;
+      arr.forEach(x => { if (x && Number.isFinite(x.id) && Number.isFinite(x.day) && Number.isFinite(x.amount) && !ids.has(x.id)) { E.push({ id: x.id, day: x.day, amount: x.amount, note: String(x.note || '') }); ids.add(x.id); added++; } });
+      save(); lastTotal = 0; renderBody(v);
+      alert('Добавлено записей: ' + added);
+    } catch (e) { alert('Не удалось прочитать файл. Нужна копия, сохранённая из этого приложения.'); }
+  };
+  r.readAsText(f);
+}
+
+// ---- переходы между экранами ----
+const app = $('#app');
+let curView = null;
+function show(name, arg, isBack, first) {
+  const v = name === 'a' ? viewAdd() : name === 'm' ? viewMonth(arg) : viewOverview();
+  if (!first) v.classList.add(isBack ? 'vin-l' : 'vin-r');
+  app.appendChild(v);
+  if (v._mount) v._mount();
+  if (curView) { const o = curView; o.classList.add(isBack ? 'vout-r' : 'vout-l'); setTimeout(() => o.remove(), 420); }
+  curView = v;
+}
+function nav(name, arg) { history.pushState({ n: name, arg }, ''); show(name, arg, false); }
+window.addEventListener('popstate', e => {
+  const s = e.state;
+  if (!s || s.n === 'o') show('o', null, true); else show(s.n, s.arg, false);
+});
+history.replaceState({ n: 'o' }, '');
+show('o', null, false, true);
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
